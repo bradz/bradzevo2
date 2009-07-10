@@ -14,8 +14,7 @@ if( !defined('IN_EVO') ) {
  * 
  */
 class member_fleet extends fleet {
-	//private $fleet_id;			// fleet_id of member (0, 1, 2, 3)
-	public $fleet_id;			// fleet_id of member (0, 1, 2, 3)
+	private $fleet_id;			// fleet_id of member (0, 1, 2, 3)
 	private $user_id;			// user_id of member
 	private $ships;				// array of ship objects 
 	
