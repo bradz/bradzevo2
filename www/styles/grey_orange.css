@@ -1,0 +1,221 @@
+/*** HYPERLINKS ***/
+
+a:link {
+	color: #95AEC0;
+	text-decoration: underline;
+}
+
+a:visited {
+	color: #95AEC0;
+	text-decoration: underline;
+}
+
+a:hover {
+	color: #FFFFFF;
+	text-decoration: underline;
+}
+
+a:active {
+	color: #95AEC0;
+	text-decoration: underline;
+}
+
+/*** GENERAL LAYOUT ***/
+
+body {
+	font-size: 7.5pt;
+	font-family: verdana, helvetica, arial, sans-serif;
+	color: #f0a71a;
+	background: #434343;
+	/*
+	text-align:center;
+	margin:0;
+	padding:0;
+	*/
+}
+
+/**** DEMO STUFF ****/
+div.main_box {
+	background-color: #0c2537;
+	font-size: 7.5pt;
+	text-align: center;
+	padding: 5px 5px 5px 5px; /* oben rechts unten links */
+	width: 90%;
+	
+	padding-top: 10px;
+	padding-bottom: 10px;
+	
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 25px;
+	margin-bottom: 25px;
+	
+	border-top: #95AEC0 solid 1px;
+	border-bottom: #95AEC0 solid 1px;
+	border-left: #95AEC0 solid 1px;
+	border-right: #95AEC0 solid 1px;
+}
+
+table.main {
+	//background-color: #000000;
+	width: 100%;
+	font-size: 7.5pt;
+}
+
+table.main td.sidebar {
+	//background-color: #FFFF00;
+	width: 150px;
+	padding-right: 5px;
+	vertical-align: top;
+}
+
+table.main td.content {
+	//background-color: #FF0000;
+	padding-left: 10px;
+	padding-right: 10px;
+	vertical-align: top;
+}
+
+div.sidebar_header {
+	background-color: #252525;
+	text-align: left;
+	width: 100%;
+	
+	padding-left: 5px;
+	
+	border-top: #878787 solid 1px;
+	border-bottom: #878787 solid 1px;
+	border-left: #878787 solid 1px;
+	border-right: #878787 solid 1px;
+}
+
+div.sidebar_item {
+	text-align: left;
+	width: 100%;
+	
+	padding-left: 6px;
+	
+	padding-top: 5px;
+	padding-bottom: 20px;
+}
+
+div.content_header {
+	background-color: #252525;
+	font-size: 7.5pt;
+	text-align: right;
+	width: 100%;
+	
+	padding-right: 5px;
+	
+	border-top: #878787 solid 1px;
+	border-bottom: #878787 solid 1px;
+	border-left: #878787 solid 1px;
+	border-right: #878787 solid 1px;
+}
+
+div.content_subheader {
+	background-color: #252525;
+	font-size: 7.5pt;
+	text-align: right;
+	width: 90%;
+	
+	margin-top: 15px;
+	margin-bottom: 5px;
+	
+	margin-left: auto;
+	margin-right: auto;
+	
+	padding-right: 5px;
+	
+	border-top: #878787 solid 1px;
+	border-bottom: #878787 solid 1px;
+	border-left: #878787 solid 1px;
+	border-right: #878787 solid 1px;
+}
+
+div.content_item {
+	text-align: left;
+	width: 90%;
+	
+	margin-left: auto;
+	margin-right: auto;
+	
+	padding-right: 6px;
+	padding-left: 6px;
+	
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+table {
+	font-size: 7.5pt;
+	text-align: center;
+	width: 100%;
+}
+
+table tr.title {
+	font-weight: bold;
+	background-color: #252525;
+}
+
+table tr.odd {
+	//background-color: #707070;
+}
+
+table tr.even {
+	background-color: #585858;
+}
+
+/*** SPECIFIC BACKGROUND COLOURS FOR SHIPS TO RACES DISPLAY ***/
+
+table tr.odd_ter {
+	//background-color: #707070;
+	color: #cecece;
+}
+
+table tr.even_ter {
+	background-color: #585858;
+	color: #cecece;
+}
+
+table tr.odd_cat {
+	//background-color: #707070;
+	color: #89aaff;
+}
+
+table tr.even_cat {
+	background-color: #585858;
+	color: #89aaff;
+}
+
+table tr.odd_xan {
+	//background-color: #707070;
+	color: #42df49;
+}
+
+table tr.even_xan {
+	background-color: #585858;
+	color: #42df49;
+}
+
+table tr.odd_zik {
+	//background-color: #707070;
+	color: #f12121;
+}
+
+table tr.even_zik {
+	background-color: #585858;
+	color: #f12121;
+}
+
+table tr.odd_etd {
+	//background-color: #707070;
+	color: #ffec1a;
+	//color: #000000;
+}
+
+table tr.even_etd {
+	background-color: #585858;
+	color: #ffec1a;
+	//color: #000000;
+}

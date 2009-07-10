@@ -1,0 +1,16 @@
+[General]
+cookiename=
+phpbb_relative_path=../../phpBB3/
+
+[Database]
+server=
+username=
+password=
+database=
+
+[Tables]
+phpbb_prefix=phpbb
+evo_prefix=
+
+[Access]
+tools_group=
