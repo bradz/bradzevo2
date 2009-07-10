@@ -3,7 +3,6 @@
  * Shows the alliances members
  *
  * @author morrow
- * @version Alpha
  *
  */
 
@@ -54,7 +53,7 @@ foreach( $tools_members as $key => $user_id ) {
 	} else {
 		echo "<tr class=\"odd\">";
 	}
-	echo "<td><a href=\"" . PHPBB_RELATIVE_PATH . "memberlist.php?mode=viewprofile&u=" . $user_id . "\">". $member -> get_username() . "</a></td>";
+	echo "<td><a href=\"member_fleets.php?&user_id=" . $user_id . "\">". $member -> get_username() . "</a></td>";
 	echo "<td>" . $member -> get_p_nick() . "</td>";
 	echo "<td>" . $member -> get_phone() . "</td>";	
 	echo "<td>" . $member -> get_planet_coords() . "</td>";
