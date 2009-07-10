@@ -77,4 +77,7 @@ if( $user -> auth_user() == false ) {
 $my_user_id = $user->get_my_user_id(); 
 $my_username = $user->get_my_username();
 $my_groups = $user->get_my_groups();
+
+$tickers = new tickers();
+$current_tick_local = $tickers->get_current_tick( 'local_ticker' );
 ?>

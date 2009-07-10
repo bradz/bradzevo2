@@ -53,5 +53,5 @@ if( !defined('IN_EVO') ) {
 </div>
 <div class="sidebar_item">
  	<strong>&raquo;</strong> User: <?php echo $my_username;?> <br />
- 	<strong>&raquo;</strong> Tick: <?php $tickers = new tickers(); echo $tickers -> get_current_tick( 'local_ticker' ); ?>
+ 	<strong>&raquo;</strong> Tick: <?php echo $current_tick_local; ?>
 </div>
