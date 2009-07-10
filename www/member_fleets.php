@@ -74,7 +74,7 @@ if( isset( $_GET['user_id'] ) ) {
 	
 	// mft = member_fleet_total
 	$mft = new member_fleet_total( $_GET['user_id'] );
-	$sft = $mft->get_all_ships();
+	$sft = $mft->get_all_ships( true );
 	
 	echo "<div class=\"content_item\">";
 	echo "<table>";
@@ -112,9 +112,9 @@ if( isset( $_GET['user_id'] ) ) {
 			echo "<td>" . $ship->get_race() . "</td>";
 			echo "</tr>";
 		}
+	}
 	echo "</table>";
 	echo "</div>";
-	}
 	
 	for( $j = 0; $j < 4; $j++ ) {
 		if( $j == 0 ) {
@@ -130,7 +130,10 @@ if( isset( $_GET['user_id'] ) ) {
 		
 		// mf = member_fleet
 		$mf = new member_fleet( $j, $_GET['user_id'] );
-		$sf = $mf->display_ships_in_fleet();
+		$sf = $mf->get_ships_in_fleet( true, true );
+		$return_tick = $mf->get_return_tick();
+		
+		echo "Return Tick: " . $return_tick . "<br />";
 		
 		echo "<div class=\"content_item\">";
 		echo "<table>";

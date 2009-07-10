@@ -45,7 +45,7 @@ if( !isset( $_POST['parse'] ) ) {
 	echo "</form>";
 	echo "</div>";	
 } else {
-	$parse = new parse( $_POST['parse'], $my_user_id, $db );
+	$parse = new parse( $_POST['parse'], $my_user_id );
 }
 
 /*

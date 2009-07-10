@@ -29,10 +29,12 @@ class parse {
 	 * @param $text
 	 * @return unknown_type
 	 */
-	public function __construct( $text, $user_id, $db ) {
+	public function __construct( $text, $user_id ) {
+		global $db;
 		$this->db = $db;
+		
 		$this->user_id = $user_id;
-		$this->text = $text;
+		$this->text = $text; 
 		$this->determine_type();
 		$this->determine_tick();
 		$this->determine_coords();
@@ -88,7 +90,22 @@ class parse {
 	 * 
 	 * @return unknown_type
 	 */
-	public function process_missions() {		
+	public function process_missions() {
+		// 0 - regular expressions
+		// a - ships
+		$re_ships = "/(.*)";
+		$re_ships = $re_ships . "\s+(Fighter|Corvette|Frigate|Destroyer|Cruiser|Battleship)"; 							// class
+		$re_ships = $re_ships . "\s+(Fighter|Corvette|Frigate|Destroyer|Cruiser|Battleship|Asteroids|Structures|-)"; 	// t1
+		$re_ships = $re_ships . "\s+(Fighter|Corvette|Frigate|Destroyer|Cruiser|Battleship|-)"; 						// t2
+		$re_ships = $re_ships . "\s+(Fighter|Corvette|Frigate|Destroyer|Cruiser|Battleship|-)"; 						// t3
+		$re_ships = $re_ships . "\s+(Normal|Emp|Cloak|Steal|Pod|Structure Killer)";										// type
+		$re_ships = $re_ships . "\s+(\d+)/";
+		
+		// b - various tt regex's that can be applied
+		$re_2 = "/Launching\s+in\s+tick\s+(\d+),\s+arrival\s+in\s+tick\s+(\d+)/";
+		$re_3 = "/Return\s+ETA:\s+(\d+)/";
+		$re_4 = "/ETA:\s+(\d+),\s+Return\s+ETA:\s+(\d+)/";
+		
 		// 1 - explode string into an array 
 		$lines = explode( "\r\n", $this->text );
 		
@@ -100,69 +117,69 @@ class parse {
 			if( $a ) {
 				$limits[] = $i;
 			}
-		}	
+		}
 		
-		// 3 - cut array apart
-		$f0_array = array_slice( $lines, $limits[0], $limits[1] - $limits[0] );
-		$f1_array = array_slice( $lines, $limits[1], $limits[2] - $limits[1] );
-		$f2_array = array_slice( $lines, $limits[2], $limits[3] - $limits[2] );
-		$f3_array = array_slice( $lines, $limits[3] ); 
-		
-		// 4 - implode the blocks
-		$f0_string = implode( "\r\n", $f0_array );
-		$f1_string = implode( "\r\n", $f1_array );
-		$f2_string = implode( "\r\n", $f2_array );
-		$f3_string = implode( "\r\n", $f3_array );
-		
-		// 5 - apply coordinate, ship, mission, eta and traveltime (for unmoving fleets) detection regex'es
-		$re_ships = "/(.*)";
-		$re_ships = $re_ships . "\s+(Fighter|Corvette|Frigate|Destroyer|Cruiser|Battleship)"; 							// class
-		$re_ships = $re_ships . "\s+(Fighter|Corvette|Frigate|Destroyer|Cruiser|Battleship|Asteroids|Structures|-)"; 	// t1
-		$re_ships = $re_ships . "\s+(Fighter|Corvette|Frigate|Destroyer|Cruiser|Battleship|-)"; 						// t2
-		$re_ships = $re_ships . "\s+(Fighter|Corvette|Frigate|Destroyer|Cruiser|Battleship|-)"; 						// t3
-		$re_ships = $re_ships . "\s+(Normal|Emp|Cloak|Steal|Pod|Structure Killer)";										// type
-		$re_ships = $re_ships . "\s+(\d+)/"; 
-		
-		preg_match_all( $re_ships, $f0_string, $matches_f0 );
-		preg_match_all( $re_ships, $f1_string, $matches_f1 );
-		preg_match_all( $re_ships, $f2_string, $matches_f2 );
-		preg_match_all( $re_ships, $f3_string, $matches_f3 );
-		
-		/*
-		echo "<div style=\"text-align: left;\">";
-		echo "<pre>";
-		var_dump( $matches_f0 );
-		echo "<hr />";
-		var_dump( $matches_f1 );
-		echo "<hr />";
-		var_dump( $matches_f2 );
-		echo "<hr />";
-		var_dump( $matches_f3 );
-		echo "</pre>";
-		echo "</div>";
-		*/
-		
-		$matches_all = array( $matches_f0, $matches_f1, $matches_f2, $matches_f3 );
-		
-		foreach( $matches_all as $j => $matches ) {
+		// do all the following for every fleet block we find 
+		for( $j = 0; $j < 4; $j++ ) {
+			// 3 - cut array apart
+			if( $j == 3 ) {
+				$fleet_array = array_slice( $lines, $limits[$j] );	
+			} else {
+				$fleet_array = array_slice( $lines, $limits[$j], $limits[$j+1] - $limits[$j] );
+			}
+			
+			// 4 - implode the blocks
+			$fleet_string = implode( "\r\n", $fleet_array );
+			
+			// 5 - apply regular expressions for ships
+			preg_match_all( $re_ships, $fleet_string, $matches );
+			
+			// DEBUGGING
+			/****
+			echo "<div style=\"text-align: left;\">";
+			echo "<pre>";
+			var_dump( $matches );
+			echo "<hr />";
+			echo "</pre>";
+			echo "</div>";
+			****/
+
+			// 6 - apply regular expressions to determine return tick;
+			// 		default value is the current_tick
+			$return_tick = $this->tick;
+			if( preg_match( $re_4, $fleet_string, $match ) ) {
+				$eta = $match[1];
+				$return_eta = $match[2];
+				$return_tick= ( $eta + $return_eta ) + $eta + $this->tick;
+			} elseif( preg_match( $re_3, $fleet_string, $match ) ) {
+				$return_eta = $match[1];
+				$return_tick = $return_eta + $this->tick;
+			} elseif( preg_match( $re_2, $fleet_string, $match ) ) {
+				$launch = $match[1];
+				$arrival = $match[2];
+				$return_tick = $arrival + ( $arrival - $launch );
+			}
+			
+			// 7 - process ships
 			$ships_name = $matches[1];
 			$ships_amount = $matches[7];
 			
 			// build an array of ( ['shipname'] => $number_of_ships )
 			$ships = array();
-			foreach( $ships_name as $i => $ship_name ) {
+			foreach( $ships_name as $k => $ship_name ) {
 				$ship = new ship( trim ( $ship_name ) );		// new ship
-				$ship->set_amount( $ships_amount[$i] );			// set amount of ships
+				$ship->set_amount( $ships_amount[$k] );			// set amount of ships
 				$ships[] = $ship;								// append to array
 			}
 			
 			$mf = new member_fleet( $j, $this->user_id );
 			$mf->set_ships_in_fleet( $ships );
+			$mf->set_return_tick( $return_tick );
 			$mf->save_fleet();
 			
 			unset($ships);
 			unset($mf);
-		}		
+		}
 	}
 }
 ?>

@@ -7,22 +7,23 @@ if( !defined('IN_EVO') ) {
 }
 
 /**
- * Member fleet class. Contains methods to read and write fleet composition and missions of members. 
+ * Member fleet class. Contains methods to load, save, get, and set
+ * fleet composition and arrival times.
  * 
  * @author morrow
- * @version Alpha
  * 
  */
 class member_fleet extends fleet {
 	private $fleet_id;			// fleet_id of member (0, 1, 2, 3)
 	private $user_id;			// user_id of member
+	private $return_tick;		// tick when the fleet will be at base
 	private $ships;				// array of ship objects 
 	
 	/**
 	 * Constructor. Requires $fleet_id and $user_id of member to be passed.
 	 * 
 	 * @param $fleet_id (int) 0, 1, 2 or 3
-	 * @param $user_id
+	 * @param $user_id (int)
 	 * @return (nothing)
 	 */
 	public function __construct( $fleet_id, $user_id ) {
@@ -34,99 +35,51 @@ class member_fleet extends fleet {
 	
 	/**
 	 * Returns array of objects where each object is a type of ship. Each of
-	 * these objects has properties (accessed via set_XYZ())
+	 * these objects has various properties. See the ship class for details.
 	 * 
-	 * - name
-	 * - id
-	 * - class
-	 * - t1
-	 * - t2
-	 * - t3
-	 * - type
-	 * - race
-	 * - cost (total)
-	 * 
-	 * @return unknown_type
+	 * @param $truncate (bool) (true => omit all 0 amount ships)
+	 * @param $value (bool) (true => compute and add value fraction to output)
+	 * @return (array) of ships objects
 	 */
-	public function get_ships_in_fleet() {
-		// check if we already fetched the data previously
-		if( !isset( $this->ships ) ) {	
-			// 1 - get all ship names
-			$ships = $this->ship2column( $this->fleet_id );
+	public function get_ships_in_fleet( $truncate, $value ) {
+		// check if we already fetched the data from the db
+		// if not, go fetch them
+		if( !isset( $this->ships ) ) {
+			$this->load_fleet();
+		}
+		
+		$ships = $this->ships;
+		
+		// compute cost (=value) fraction if requested
+		if( $value ) {
+			// compute total cost
+			$total_cost = 0;
+			foreach( $ships as $ship ) {
+				$total_cost += $ship->get_amount() * $ship->get_cost();
+			}
 			
-			// 2 - construct sql
-			$sql = " SELECT";
-			foreach( $ships as $i => $ship ) {
-				if( $i == count( $ships ) - 1 ) {
-					$sql = $sql . " mf." . $ship;	
+			// cycle through ships array and set fractional value
+			foreach( $ships as $ship ) {
+				if( $total_cost == 0 ) {
+					$ship->set_cost_fraction( 0 );	
 				} else {
-					$sql = $sql . " mf." . $ship . ", ";
+					$ship->set_cost_fraction( round( $ship->get_amount() * $ship->get_cost() / $total_cost, 2 ) );	
 				}
 			}
-			$sql = $sql . " FROM " . EVO_PREFIX . "_member_fleets mf";
-			$sql = $sql . " WHERE mf.user_id = '" . $this->user_id . "';";
+		}
 			
-			// 3 - get amount of these ships from db and set in object
-			// 4 - append each ship object to the $this->ships array 
-			if( $result = $this->db->query($sql) ) {
-				// fetch an associative array instead of an object because we can index the array by
-				// constructing the keyname from the list of ship types  
-				$row = $result->fetch_assoc();
-				foreach( $row as $i => $amount ) {
-					$ship_name = substr( ucwords($i), 0, count($i) - 3 );		// e.g., "demeter_0" becomes "Demeter"
-					$ship = new ship( $ship_name );								// create new ship object
-					$ship->set_amount( $amount );								// set amount of this ship
-					$this->ships[] = $ship;										// append to array of ships
-				}
-			} else {
-				echo $this->db->error;
-				exit;
-			}
-		}
-		return $this->ships;
-	}
-	
-	/**
-	 * Returns a more complete list of ships in a fleet. Doesn't change the
-	 * object wide variables.  
-	 * 
-	 * @param $truncate (true: remove all ships where $amount == 0 form array)
-	 * @return unknown_type
-	 */
-	public function display_ships_in_fleet( $truncate = true ) {
-		// get all ships
-		$ships_new = $this->get_ships_in_fleet();
-		
-		/*** FROM HERE IS COPIED FROM member_fleet_total.class.php ***/
-		/*** THIS IS QUITE DISGUSTING; FIGURE SOMETHING OUT :< ***/
-		
-		// compute total value
-		$total_cost = 0;
-		foreach( $ships_new as $ship ) {
-			$total_cost += $ship->get_amount() * $ship->get_cost();
-		}
-		
-		// cycle through ships array and set fractional value
-		foreach( $ships_new as $ship ) {
-			if( $total_cost == 0 ) {
-				$ship->set_cost_fraction( 0 );	
-			} else {
-				$ship->set_cost_fraction( round( $ship->get_amount() * $ship->get_cost() / $total_cost, 2 ) );	
-			}
-		}
-		
-		// if $truncate = true; drop all ships with $amount = 0 from array
+		// truncate if requested
 		if( $truncate ) {
-			foreach( $ships_new as $i => $ship ) {
+			foreach( $ships as $i => $ship ) {
 				if( $ship->get_amount() == 0 ) {
-					unset($ships_new[$i]);
+					unset($ships[$i]);
 				}
 			}
-			$ships_new = array_values( $ships_new );
+			$ships = array_values( $ships );
 		}
 		
-		// return
-		return $ships_new;
+		// return the shebang
+		return $ships;
 	}
 	
 	/**
@@ -205,22 +158,108 @@ class member_fleet extends fleet {
 		// now make the sql
 		$sql = "UPDATE " . EVO_PREFIX . "_member_fleets mf";
 		$sql = $sql . " SET";
-		foreach( $ships_cols as $i => $ship_col ) {
-			$ship_name = substr( ucwords($ship_col), 0, count($i) - 3 );	// get shipname to access amounts array
-			if( $i == count( $ships_cols ) - 1 ) {
-				$sql = $sql . " mf." . $ship_col . " = " . (int) $this->db->real_escape_string( $ships_array[$ship_name] );	
-			} else {
+		
+		// if we consider the base_fleet, construct an $sql without changing the return_tick
+		// otherwise set the return_tick field depending on the fleet_id  
+		if( $this->fleet_id == 0 ) {
+			foreach( $ships_cols as $i => $ship_col ) {
+				$ship_name = substr( ucwords($ship_col), 0, count($i) - 3 );	// get shipname to access amounts array
+				if( $i == count( $ships_cols ) - 1 ) {
+					$sql = $sql . " mf." . $ship_col . " = " . (int) $this->db->real_escape_string( $ships_array[$ship_name] );	
+				} else {
+					$sql = $sql . " mf." . $ship_col . " = " . (int) $this->db->real_escape_string( $ships_array[$ship_name] ) . ", ";
+				}
+			}
+		} else {
+			foreach( $ships_cols as $i => $ship_col ) {
+				$ship_name = substr( ucwords($ship_col), 0, count($i) - 3 );	// get shipname to access amounts array
 				$sql = $sql . " mf." . $ship_col . " = " . (int) $this->db->real_escape_string( $ships_array[$ship_name] ) . ", ";
 			}
+			$sql = $sql . " mf.return_tick_" . $this->fleet_id . " = " . (int) $this->db->real_escape_string( $this->return_tick );
 		}
+		
 		$sql = $sql . " WHERE mf.user_id = " . (int) $this->db->real_escape_string( $this->user_id ) . ";";
-
+		
 		// hit it!
 		if( !$this->db->query($sql) ) {
 			$this->db->error;
 			exit;
 		}
-	} 
+	}
+
+	/**
+	 * Load ships and return_tick information from the db.
+	 *  
+	 * @return unknown_type
+	 */
+	public function load_fleet() {
+		// load all ships from the db if not done 
+		if( !isset( $this->ships ) ) {	
+			// 1 - get all ship names
+			$ships = $this->ship2column( $this->fleet_id );
+			
+			// prepare ships array (in case captain moron didn't paste anything yet and the fleet
+			// query will be returned empty)
+			$this->ships = array();
+			
+			// 2 - construct sql
+			$sql = " SELECT";
+			foreach( $ships as $i => $ship ) {
+				if( $i == count( $ships ) - 1 ) {
+					$sql = $sql . " mf." . $ship;	
+				} else {
+					$sql = $sql . " mf." . $ship . ", ";
+				}
+			}
+			$sql = $sql . " FROM " . EVO_PREFIX . "_member_fleets mf";
+			$sql = $sql . " WHERE mf.user_id = " . (int) $this->db->real_escape_string( $this->user_id ) . ";";
+			
+			// 3 - get amount of these ships from db and set in object
+			// 4 - append each ship object to the $this->ships array 
+			if( $result = $this->db->query($sql) ) {
+				// do we actually retrieve a row?
+				if( $result->num_rows != 0 ) {
+					// fetch an associative array instead of an object because we can index the array by
+					// constructing the keyname from the list of ship types  
+					$row = $result->fetch_assoc();
+					foreach( $row as $i => $amount ) {
+						$ship_name = substr( ucwords($i), 0, count($i) - 3 );		// e.g., "demeter_0" becomes "Demeter"
+						$ship = new ship( $ship_name );								// create new ship object
+						$ship->set_amount( $amount );								// set amount of this ship
+						$this->ships[] = $ship;										// append to array of ships
+					}
+				}
+			} else {
+				echo $this->db->error;
+				exit;
+			}
+		}
+		
+		// get return tick from the db if not set
+		if( !isset( $this->return_tick ) ) {
+			// if we are in the base fleet; return 0
+			if( $this->fleet_id == 0 ) {
+				$this->return_tick = 0;
+			} else {
+				$sql = "SELECT mf.return_tick_" . $this->fleet_id . " as return_tick";
+				$sql = $sql . " FROM " . EVO_PREFIX . "_member_fleets mf";
+				$sql = $sql . " WHERE mf.user_id = " . (int) $this->db->real_escape_string( $this->user_id ) . ";";
+				
+				if( $result = $this->db->query($sql) ) {
+					// if no row exists, set return tick to 0
+					if( $result->num_rows == 0 ) {
+						$this->return_tick = 0;
+					} else {
+						$row = $result->fetch_object();
+						$this->return_tick = $row->return_tick;
+					}
+				} else {
+					echo $this->db->error;
+					exit;
+				}
+			}
+		}
+	}
 	
 	/**
 	 * Grabs all ship names and reformats them to column name format. The 
@@ -258,6 +297,28 @@ class member_fleet extends fleet {
 			$array[$object->get_name()] = $object->get_amount();
 		}
 		return $array;
+	}
+	
+	/**
+	 * Sets the return tick of the fleet.
+	 * 
+	 * @param $tick_return
+	 * @return unknown_type
+	 */
+	public function set_return_tick( $return_tick ) {
+		$this->return_tick = $return_tick;
+	}
+	
+	/**
+	 * Gets the return_tick of the fleet.
+	 * 
+	 * @return unknown_type
+	 */
+	public function get_return_tick() {
+		if( !isset( $this->return_tick ) ) {
+			$this->load_fleet();	
+		}
+		return $this->return_tick;
 	}
 }
 ?>

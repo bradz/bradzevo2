@@ -6,12 +6,23 @@ if( !defined('IN_EVO') ) {
 	exit;
 }
 
+/**
+ * Class for the entire fleet (base, 1, 2, 3 combined) of a given member. 
+ * 
+ * @author morrow
+ *
+ */
 class member_fleet_total {
 	private $user_id;			// user_id of member
 	private $ships;				// array of all ship objects
-	
 	private $db;
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param $user_id (int)
+	 * @return unknown_type
+	 */
 	public function __construct( $user_id ) {
 		global $db;
 		$this->db = $db;
@@ -19,25 +30,16 @@ class member_fleet_total {
 	}
 	
 	/**
-	 * Returns array of objects where each object is a type of ship. Each of
-	 * these objects has properties (accessed via set_XYZ())
+	 * Returns array of objects where each object is a type of ship. See ships class
+	 * for details. In addition, the objects have the field:
 	 * 
-	 * - name
-	 * - id
-	 * - class
-	 * - t1
-	 * - t2
-	 * - t3
-	 * - type
-	 * - race
-	 * - total ship cost (amount * cost)
 	 * - value fraction (total ship cost / total cost for all ships)
 	 * 
 	 * If $truncate == true, then ships objects of amount = 0 aren't returned.
 	 * 
 	 * @return unknown_type
 	 */
-	public function get_all_ships( $truncate = true ) {
+	public function get_all_ships( $truncate ) {
 		// instantiate fleet objects
 		$f0 = new member_fleet( 0, $this->user_id );
 		$f1 = new member_fleet( 1, $this->user_id );
@@ -45,12 +47,13 @@ class member_fleet_total {
 		$f3 = new member_fleet( 3, $this->user_id );
 		
 		// get ships from each fleet
-		$s0 = $f0->get_ships_in_fleet();
-		$s1 = $f1->get_ships_in_fleet();
-		$s2 = $f2->get_ships_in_fleet();
-		$s3 = $f3->get_ships_in_fleet();
+		$s0 = $f0->get_ships_in_fleet( false, false );
+		$s1 = $f1->get_ships_in_fleet( false, false );
+		$s2 = $f2->get_ships_in_fleet( false, false );
+		$s3 = $f3->get_ships_in_fleet( false, false );
 		
 		// cycle through the entire array and add up
+		$ships_new = array();
 		foreach( $s0 as $i => $ship ) {
 			// 1 - copy ship
 			$ship_new = $ship;
