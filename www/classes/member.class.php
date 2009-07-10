@@ -14,16 +14,17 @@ if( !defined('IN_EVO') ) {
  */
 class member {
 	// access related
-	private $user_id;
-	private $username;
-	private $groups_id;
-	private $groups_name;
+	private $user_id;				// user_id in the database
+	private $username;				// username
+	private $groups_id;				// array of group_id's the member is part of
+	private $groups_name;			// dito, but with names of the groups
 	
 	// information related
-	private $planet_id;
-	private $planet_coords;
-	private $p_nick;
-	private $phone;
+	private $planet_id;				// id of planet (currently unused)
+	private $planet_coords;			// coordinates of planet
+	private $p_nick;				// pnick on netgamers
+	private $phone;					// phone number
+	private $tt_bonus;				// travel time bonus
 	
 	// database
 	private $db;
@@ -208,6 +209,51 @@ class member {
 			}
 		}
 		return $this->planet_coords;
+	}
+	
+	/**
+	 * Set travel time bonus.
+	 * 
+	 * @param $tt_bonus
+	 * @return unknown_type
+	 */
+	public function set_tt_bonus( $tt_bonus ) {
+		$sql = "UPDATE " . PHPBB_PREXIX . "_profile_fields_data c";
+		$sql = $sql . " SET c.pf_tt_bonus = " . (int) $this->db->real_escape_string( $tt_bonus );
+		$sql = $sql . " WHERE c.user_id = " . (int) $this->db->real_escape_string( $this->user_id ) . ";";
+		
+		if( !$this->db->query($sql) ) {
+			echo $this->db->error;
+			exit;
+		}
+		
+		$this->tt_bonus = $tt_bonus;
+	}
+	
+	/**
+	 * Get travel time bonus.
+	 * 
+	 * @return unknown_type
+	 */
+	public function get_tt_bonus() {
+		if( !isset( $this->tt_bonus ) ) {
+			$sql = "SELECT c.pf_tt_bonus";
+			$sql = $sql . " FROM " . PHPBB_PREFIX . "_profile_fields_data c";
+			$sql = $sql . " WHERE c.user_id = " . (int) $this->db->real_escape_string( $this->user_id ) . ";";
+			
+			if( $res = $this->db->query($sql) ) {
+				if( $res->num_rows == 1 ) {
+					$row = $res->fetch_object();
+					$this->tt_bonus = $row->tt_bonus;
+				} else {
+					$this->tt_bonus = 0;
+				}
+			} else {
+				echo $this->db->error;
+				exit;
+			}
+		}
+		return $this->tt_bonus;
 	}
 }
 ?>
