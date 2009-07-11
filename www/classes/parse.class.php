@@ -95,6 +95,16 @@ class parse {
 		//var_dump($this->coords);
 	}
 	
+	/**
+	 * Compute ETA Bonus.
+	 * 
+	 * Cycles through the ships array to find highest ETA ship. Then compares
+	 * actual travel time with base travel time.
+	 * 
+	 * @param $ships (array of ship objects)
+	 * @param $eta (int)
+	 * @return $eta_bonus (int)
+	 */
 	private function compute_eta_bonus( $ships, $eta ) {
 		$base_eta = 12;	// 12 - fico; 13 - frde; 14 - crbs
 		foreach( $ships as $i => $ship ) {
