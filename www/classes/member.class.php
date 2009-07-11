@@ -24,7 +24,7 @@ class member {
 	private $planet_coords;			// coordinates of planet
 	private $p_nick;				// pnick on netgamers
 	private $phone;					// phone number
-	private $tt_bonus;				// travel time bonus
+	private $eta_bonus;				// travel time (ETA) bonus
 	
 	// database
 	private $db;
@@ -212,14 +212,14 @@ class member {
 	}
 	
 	/**
-	 * Set travel time bonus.
+	 * Set ETA bonus.
 	 * 
 	 * @param $tt_bonus
 	 * @return unknown_type
 	 */
-	public function set_tt_bonus( $tt_bonus ) {
-		$sql = "UPDATE " . PHPBB_PREXIX . "_profile_fields_data c";
-		$sql = $sql . " SET c.pf_tt_bonus = " . (int) $this->db->real_escape_string( $tt_bonus );
+	public function set_eta_bonus( $eta_bonus ) {
+		$sql = "UPDATE " . PHPBB_PREFIX . "_profile_fields_data c";
+		$sql = $sql . " SET c.pf_eta_bonus = " . (int) $this->db->real_escape_string( $eta_bonus );
 		$sql = $sql . " WHERE c.user_id = " . (int) $this->db->real_escape_string( $this->user_id ) . ";";
 		
 		if( !$this->db->query($sql) ) {
@@ -227,33 +227,33 @@ class member {
 			exit;
 		}
 		
-		$this->tt_bonus = $tt_bonus;
+		$this->eta_bonus = $eta_bonus;
 	}
 	
 	/**
-	 * Get travel time bonus.
+	 * Get ETA bonus.
 	 * 
 	 * @return unknown_type
 	 */
-	public function get_tt_bonus() {
-		if( !isset( $this->tt_bonus ) ) {
-			$sql = "SELECT c.pf_tt_bonus";
+	public function get_eta_bonus() {
+		if( !isset( $this->eta_bonus ) ) {
+			$sql = "SELECT c.pf_eta_bonus";
 			$sql = $sql . " FROM " . PHPBB_PREFIX . "_profile_fields_data c";
 			$sql = $sql . " WHERE c.user_id = " . (int) $this->db->real_escape_string( $this->user_id ) . ";";
 			
 			if( $res = $this->db->query($sql) ) {
 				if( $res->num_rows == 1 ) {
 					$row = $res->fetch_object();
-					$this->tt_bonus = $row->tt_bonus;
+					$this->eta_bonus = $row->pf_eta_bonus;
 				} else {
-					$this->tt_bonus = 0;
+					$this->eta_bonus = 0;
 				}
 			} else {
 				echo $this->db->error;
 				exit;
 			}
 		}
-		return $this->tt_bonus;
+		return $this->eta_bonus;
 	}
 }
 ?>

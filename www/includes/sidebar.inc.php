@@ -52,6 +52,7 @@ if( !defined('IN_EVO') ) {
 	INFORMATION
 </div>
 <div class="sidebar_item">
- 	<strong>&raquo;</strong> User: <?php echo $my_username;?> <br />
- 	<strong>&raquo;</strong> Tick: <?php echo $current_tick_local; ?>
+ 	<strong>&raquo;</strong> User: <?php echo $my_username;?><br />
+ 	<strong>&raquo;</strong> Tick: <?php echo $current_tick_local; ?><br />
+ 	<strong>&raquo;</strong> ETA Bonus: <?php echo $my_eta_bonus; ?>
 </div>

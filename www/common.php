@@ -80,4 +80,7 @@ $my_groups = $user->get_my_groups();
 
 $tickers = new tickers();
 $current_tick_local = $tickers->get_current_tick( 'local_ticker' );
+
+$member = new member( $my_user_id );
+$my_eta_bonus = $member->get_eta_bonus();
 ?>

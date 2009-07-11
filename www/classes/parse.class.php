@@ -95,6 +95,19 @@ class parse {
 		//var_dump($this->coords);
 	}
 	
+	private function compute_eta_bonus( $ships, $eta ) {
+		$base_eta = 12;	// 12 - fico; 13 - frde; 14 - crbs
+		foreach( $ships as $i => $ship ) {
+			if( ( $ship->get_class() == 'FR' or $ship->get_class() == 'DE' ) and $base_eta != 14 ) {
+				$base_eta = 13;
+			} elseif( $ship->get_class() == 'CR' or $ship->get_class() == 'BS' ) {
+				$base_eta = 14;
+			}
+		}
+		$eta_bonus = $base_eta - $eta; 
+		return $eta_bonus;
+	}
+	
 	/**
 	 * Process a missions page parse.
 	 * 
@@ -112,7 +125,7 @@ class parse {
 		$re_ships = $re_ships . "\s+(\d+)/";
 		
 		// b - various tt regex's that can be applied
-		$re_1 = "/Galaxy\s+ETA:\s+(\d+)\s+ticks,\s+Cluster\s+Defence\s+ETA:\s+(\d+)\s+ticks,\s+Universe\s+ETA:\s+12 ticks,\s+Alliance\s+ETA:\s+(\d+)\s+ticks/";
+		$re_1 = "/Galaxy\s+ETA:\s+(\d+)\s+ticks,\s+Cluster\s+Defence\s+ETA:\s+(\d+)\s+ticks,\s+Universe\s+ETA:\s+(\d+)\s+ticks,\s+Alliance\s+ETA:\s+(\d+)\s+ticks/";
 		$re_2 = "/Launching\s+in\s+tick\s+(\d+),\s+arrival\s+in\s+tick\s+(\d+)/";
 		$re_3 = "/Return\s+ETA:\s+(\d+)/";
 		$re_4 = "/ETA:\s+(\d+),\s+Return\s+ETA:\s+(\d+)/";
@@ -153,27 +166,9 @@ class parse {
 			echo "<hr />";
 			echo "</pre>";
 			echo "</div>";
-			****/
+			****/			
 
-			// 6 - apply regular expressions to determine return tick;
-			// 		default value is the current_tick
-			$return_tick = $this->tick;
-			if( preg_match( $re_4, $fleet_string, $match ) ) {
-				$eta = $match[1];
-				$return_eta = $match[2];
-				$return_tick= ( $eta + $return_eta ) + $eta + $this->tick;
-			} elseif( preg_match( $re_3, $fleet_string, $match ) ) {
-				$return_eta = $match[1];
-				$return_tick = $return_eta + $this->tick;
-			} elseif( preg_match( $re_2, $fleet_string, $match ) ) {
-				$launch = $match[1];
-				$arrival = $match[2];
-				$return_tick = $arrival + ( $arrival - $launch );
-			} elseif( preg_match( $re_1, $fleet_string, $match ) ) {
-				$return_tick = $this->tick;
-			}
-			
-			// 7 - process ships
+			// 6 - process ships
 			$ships_name = $matches[1];
 			$ships_amount = $matches[7];
 			
@@ -187,13 +182,47 @@ class parse {
 			
 			$mf = new member_fleet( $j, $this->user_id );
 			$mf->set_ships_in_fleet( $ships );
+			
+			// 7 - apply regular expressions to determine return tick;
+			// 		default value is the current_tick
+			$return_tick = $this->tick;
+			if( preg_match( $re_4, $fleet_string, $match ) ) {
+				$eta = $match[1];
+				$return_eta = $match[2];
+				$return_tick= ( $eta + $return_eta ) + $eta + $this->tick;
+				$eta_bonus = $this->compute_eta_bonus( $ships, $eta + $return_eta );
+			} elseif( preg_match( $re_3, $fleet_string, $match ) ) {
+				$return_eta = $match[1];
+				$return_tick = $return_eta + $this->tick;
+			} elseif( preg_match( $re_2, $fleet_string, $match ) ) {
+				$launch = $match[1];
+				$arrival = $match[2];
+				$return_tick = $arrival + ( $arrival - $launch );
+				$eta_bonus = $this->compute_eta_bonus( $ships, $arrival - $launch );
+			} elseif( preg_match( $re_1, $fleet_string, $match ) ) {
+				$return_tick = $this->tick;
+				$eta_bonus = $this->compute_eta_bonus( $ships, $match[3] );
+			}
+			
+			// 8 - save return tick and fleets
 			$mf->set_return_tick( $return_tick );
 			$mf->save_fleet();
+			
+			// 9 - save eta bonus
+			if( isset( $eta_bonus ) ) {
+				$member = new member( $this->user_id );
+				$member->set_eta_bonus( $eta_bonus );
+			}
 			
 			unset($ships);
 			unset($mf);
 		}
-		$this->feedback = "Parsed Missions for " . $this->coords . " at Tick " . $this->tick . ".";
+		if( isset( $eta_bonus ) ) {
+			$this->feedback = "Parsed Missions for " . $this->coords . " at Tick " . $this->tick . ".<br /><br />";
+			$this->feedback = $this->feedback . "Detected ETA Bonus: " . $eta_bonus . ".";
+		} else {
+			$this->feedback = "Parsed Missions for " . $this->coords . " at Tick " . $this->tick . ".";
+		}
 	}
 }
 ?>
