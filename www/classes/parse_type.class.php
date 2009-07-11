@@ -30,5 +30,14 @@ class parse_type {
 			echo "blahrgh";
 		}
 	}
+	
+	/**
+	 * Return the parse type as a string.
+	 * 
+	 * @return (string) parse_type
+	 */
+	public function get_type_name() {
+		return $this->type;
+	}
 }
 ?>

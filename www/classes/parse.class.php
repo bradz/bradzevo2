@@ -19,6 +19,7 @@ class parse {
 	private $tick;		// Tick of the parse
 	private $coords;	// Coords of the parsing planet (TODO: Make this planet_id / member_id later)
 	private $user_id;	// User ID of Parsing Users
+	private $feedback;	// Feedback message			
 	private $db;		// DB object (used by subclasses)
 	
 	/**
@@ -38,7 +39,16 @@ class parse {
 		$this->determine_type();
 		$this->determine_tick();
 		$this->determine_coords();
-		$this->process_missions();
+	}
+	
+	public function process_parse() {
+		if( $this->type->get_type_name() == "missions" ) {
+			$this->process_missions();
+		}
+	}
+	
+	public function get_feedback() {
+		return $this->feedback;
 	}
 	
 	/**
@@ -90,7 +100,7 @@ class parse {
 	 * 
 	 * @return unknown_type
 	 */
-	public function process_missions() {
+	private function process_missions() {
 		// 0 - regular expressions
 		// a - ships
 		$re_ships = "/(.*)";
@@ -102,6 +112,7 @@ class parse {
 		$re_ships = $re_ships . "\s+(\d+)/";
 		
 		// b - various tt regex's that can be applied
+		$re_1 = "/Galaxy\s+ETA:\s+(\d+)\s+ticks,\s+Cluster\s+Defence\s+ETA:\s+(\d+)\s+ticks,\s+Universe\s+ETA:\s+12 ticks,\s+Alliance\s+ETA:\s+(\d+)\s+ticks/";
 		$re_2 = "/Launching\s+in\s+tick\s+(\d+),\s+arrival\s+in\s+tick\s+(\d+)/";
 		$re_3 = "/Return\s+ETA:\s+(\d+)/";
 		$re_4 = "/ETA:\s+(\d+),\s+Return\s+ETA:\s+(\d+)/";
@@ -158,6 +169,8 @@ class parse {
 				$launch = $match[1];
 				$arrival = $match[2];
 				$return_tick = $arrival + ( $arrival - $launch );
+			} elseif( preg_match( $re_1, $fleet_string, $match ) ) {
+				$return_tick = $this->tick;
 			}
 			
 			// 7 - process ships
@@ -180,6 +193,7 @@ class parse {
 			unset($ships);
 			unset($mf);
 		}
+		$this->feedback = "Parsed Missions for " . $this->coords . " at Tick " . $this->tick . ".";
 	}
 }
 ?>
