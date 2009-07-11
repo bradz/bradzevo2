@@ -27,8 +27,9 @@ class parse {
 	 * connection for subclasses, and extract type, tick and coords from
 	 * the pasted text.
 	 * 
-	 * @param $text
-	 * @return unknown_type
+	 * @param $text (string)
+	 * @param $user_id (int)
+	 * @return (nothing)
 	 */
 	public function __construct( $text, $user_id ) {
 		global $db;
@@ -41,21 +42,35 @@ class parse {
 		$this->determine_coords();
 	}
 	
+	/**
+	 * Umbrella method to determine which parsing method is called depending
+	 * on the type of parsed text. 
+	 * 
+	 * @return (nothing)
+	 */
 	public function process_parse() {
 		if( $this->type->get_type_name() == "missions" ) {
 			$this->process_missions();
 		}
 	}
 	
+	/**
+	 * Returns the feedback message. The message is set at the end of each
+	 * parsing process.  
+	 * 
+	 * @return (string)
+	 */
 	public function get_feedback() {
 		return $this->feedback;
 	}
 	
 	/**
 	 * Determine the type of parse. List of types and their regular expressions
-	 * can be found in the parse_types class. 
+	 * can be found in the parse_types class.
 	 * 
-	 * @return unknown_type
+	 * The type is set as object wide variable. 
+	 * 
+	 * @return (nothing)
 	 */
 	private function determine_type() {
 		$parse_types = parse_types::$types;
@@ -66,33 +81,32 @@ class parse {
 				$this->type = new parse_type( $parse_types[$i] );
 			}
 		}
-		//var_dump( $this->type );
 	}
 	
 	/**
 	 * Determine the tick of the parse.
 	 * 
-	 * @return unknown_type
+	 * It is stored as object wide variable.
+	 * 
+	 * @return (nothing)
 	 */
 	private function determine_tick() {
 		$re = '/Tick\s+(\d+)/';
 		preg_match( $re, $this->text, $matches );
-		//var_dump( $matches );
 		$this->tick = $matches[1];
-		//var_dump( $this->tick );
 	}
 	
 	/**
 	 * Determine the source coordinates of the parse.
 	 * 
-	 * @return unknown_type
+	 * It is stored as object wide variable.
+	 * 
+	 * @return (string)
 	 */
 	private function determine_coords() {
 		$re = '/\((\d+):(\d+):(\d+)\)/';
 		preg_match( $re, $this->text, $matches );
-		//var_dump( $matches );
 		$this->coords = $matches[1] . ":" . $matches[2] . ":" . $matches[3];
-		//var_dump($this->coords);
 	}
 	
 	/**
@@ -121,7 +135,7 @@ class parse {
 	/**
 	 * Process a missions page parse.
 	 * 
-	 * @return unknown_type
+	 * @return (nothing)
 	 */
 	private function process_missions() {
 		// 0 - regular expressions
@@ -144,7 +158,7 @@ class parse {
 		$lines = explode( "\r\n", $this->text );
 		
 		// 2 - check each array element for "Fleet	Location	Target (eta)	Mission"
-		// if this matches, remember array element where the match occured (throw into $blocks_begin array)
+		// 		if this matches, remember array element where the match occured (throw into $blocks_begin array)
 		$limits = array();
 		foreach( $lines as $i => $line ) {
 			$a = preg_match( '/Fleet\s+Location\s+Target\s+\(eta\)\s+Mission/', $line );
@@ -166,17 +180,7 @@ class parse {
 			$fleet_string = implode( "\r\n", $fleet_array );
 			
 			// 5 - apply regular expressions for ships
-			preg_match_all( $re_ships, $fleet_string, $matches );
-			
-			// DEBUGGING
-			/****
-			echo "<div style=\"text-align: left;\">";
-			echo "<pre>";
-			var_dump( $matches );
-			echo "<hr />";
-			echo "</pre>";
-			echo "</div>";
-			****/			
+			preg_match_all( $re_ships, $fleet_string, $matches );	
 
 			// 6 - process ships
 			$ships_name = $matches[1];
